@@ -1,0 +1,210 @@
+---
+title: "Using DevTreatRules"
+#author: "Jeremy Roth"
+#date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{DevTreatRules}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "##"
+)
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+options(digits=3)
+```
+Here, we illustrate the `DevTreatRules` package by building and evaluating treatment rules based on the example dataset included with the package.
+```{r}
+library(DevTreatRules)
+head(obsStudyGeneExpressions)
+```
+
+## Split the Dataset
+First, we split `obsStudyGeneExpressions` into independent development/validation/evaluation partitions by calling the `SplitData()` function
+```{r split_data}
+set.seed(123)
+example.split <- SplitData(data=obsStudyGeneExpressions, n.sets=3, split.proportions=c(0.5, 0.25, 0.25))
+table(example.split$partition)
+```
+and then forming independent datasets based on the `partition` variable created above.
+```{r make_subsets, message=FALSE}
+library(dplyr)
+development.data <- example.split %>% filter(partition == "development")
+validation.data <-  example.split %>% filter(partition == "validation")
+evaluation.data <-  example.split %>% filter(partition == "evaluation")
+```
+## Specify Variable Roles
+Suppose we believe the variables `prognosis`, `clinic`, and `age` may have influenced treatment assignment. We would codify this knowledge into `DevTreatRules` by specifying the argument
+```{r}
+names.influencing.treatment=c("prognosis", "clinic", "age")
+```
+in functions we will call later in this vignette. Further suppose that we don't expect `prognosis` and `clinic` to be measured on the same scale in independent clinical settings where we would like to apply our estimated rule (so they are not sensible rule inputs). However, we do expect the gene expression measurements in `gene_1`, ..., `gene_10` to potentially influence treatment response and also to be reliably measured in future settings (so they are sensible rule inputs). We specify this knowledge in `DevTreatRules` with the argument
+```{r}
+names.influencing.rule=c("age", paste0("gene_", 1:10))
+```
+
+## On the Development Dataset, Build the Treatment Rule
+Although we could directly estimate a single treatment rule on the development dataset with `BuildRule()` using, for example,
+```{r build_one_rule}
+one.rule <- BuildRule(development.data=development.data,
+                      study.design="observational",
+                      prediction.approach="split.regression",
+                      name.outcome="no_relapse",
+                      type.outcome="binary",
+                      desirable.outcome=TRUE,
+                      name.treatment="intervention",
+                      names.influencing.treatment=c("prognosis", "clinic", "age"),
+                      names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                      propensity.method="logistic.regression",
+                      rule.method="glm.regression")
+```
+this has limited utility because it required us to specify just one value for the `prediction.approach` argument (even if we don't have *a priori* knowledge about which of split-regression, OWL framework, and direct-interactions approaches will perform best) and to specify just one regression method for the `propensity.score` and `rule.method` arguments (even if we are not sure whether standard logistic regression or lasso/ridge logistic regression will yield a better rule).
+
+Instead, it would be more useful to perform model selection to estimate rules for different combinations of split-regression/OWL framework/direct-interactions and standard/lasso/ridge logistic regression (e.g. by looping over calls to `BuildRule()`). The model-selection process is automated in `CompareRulesOnValidation()`.
+
+## On the Validation Dataset, Perform Model Selection
+Here we will perform model selection by calling `CompareRulesOnValidation()` with the arguments
+```{r}
+vec.approaches=c("OWL", "split.regression", "OWL.framework", "direct.interactions")
+vec.rule.methods=c("glm.regression", "lasso", "ridge")
+```
+which are actually the default values of `CompareRulesOnValidation()`, and with
+```{r}
+vec.propensity.methods="logistic.regression"
+```
+Now we perform model selection by calling `CompareRulesOnValidation()`
+```{r model_selection_on_validation, warning=FALSE}
+set.seed(123)
+model.selection <- CompareRulesOnValidation(development.data=development.data,
+                validation.data=validation.data,
+                study.design.development="observational",
+                vec.approaches=c("split.regression", "OWL.framework", "direct.interactions"),
+                vec.rule.methods=c("glm.regression", "lasso", "ridge"),
+                vec.propensity.methods="logistic.regression",
+                name.outcome.development="no_relapse",
+                type.outcome.development="binary",
+                name.treatment.development="intervention",
+                names.influencing.treatment.development=c("prognosis", "clinic", "age"),
+                names.influencing.rule.development=c("age", paste0("gene_", 1:10)),
+                desirable.outcome.development=TRUE)
+```
+We can compare these estimates for the nine treatment rules (three approaches, three combinations of rule/propensity methods) to decide which rules to bring forward to the evaluation dataset. For context, the estimates for the naive "treat.all" and "treat.none" strategies are always provided by `CompareRulesOnValidation()`.
+
+First, for rules estimated with the split-regression approach, we obtain the estimates
+```{r look_at_validation_split, size="footnotesize"}
+model.selection$list.summaries[["split.regression"]] 
+```
+Next, for the OWL framework we have
+```{r look_at_validation_OWL, size="footnotesize"}
+model.selection$list.summaries[["OWL.framework"]] 
+```
+and, last, for the direct-interactions approach
+```{r look_at_validation_DI, size="footnotesize"}
+model.selection$list.summaries[["direct.interactions"]] 
+```
+Based on the above estimates in the validation set, we decide to select three rules to bring forward to the evaluation set: (1) split-regression with logistic/logistic as the propensity/rule methods,
+```{r selected_split_on_validation}
+model.selection$list.summaries$split.regression["propensity_logistic.regression_rule_glm.regression", ]
+```
+
+along with (2) OWL framework with logistic/logistic as the propensity/rule methods 
+```{r selected_OWL_on_validation}
+model.selection$list.summaries$OWL.framework["propensity_logistic.regression_rule_glm.regression", ]
+```
+
+and (3) direct-interactions with logistic/lasso as the propensity/rule methods.
+```{r selected_DI_on_validation}
+model.selection$list.summaries$direct.interactions["propensity_logistic.regression_rule_lasso", ]
+```
+
+We can also see the underlying coefficient estimates for these rules with
+```{r rule_split}
+rule.split <- model.selection$list.rules$split.regression[["propensity_logistic.regression_rule_glm.regression"]]
+coef(rule.split$rule.object.control)
+coef(rule.split$rule.object.treat)
+```
+
+```{r rule_OWL}
+rule.OWL <- model.selection$list.rules$OWL.framework[["propensity_logistic.regression_rule_glm.regression"]]
+coef(rule.OWL$rule.object)
+```
+
+```{r rule_DI}
+rule.DI <- model.selection$list.rules$direct.interactions[["propensity_logistic.regression_rule_lasso"]]
+coef(rule.DI$rule.object)
+```
+
+## On the Evaluation Dataset, Evaluate the Selected Rules
+Since the validation dataset informed our model selection (i.e. we selected these particular two rules because they appeared best on the validation set), the estimates from the validation set itself are not trustworthy estimates of performance in independent settings. To obtain a trustworthy estimate of the rules' performance in independent samples drawn from the same population, we turn to the `EvaluateRule()` function applied to the independent **evaluation** dataset.
+
+First, we obtain the estimated performance of the rule using split-regression with
+```{r split_on_eval, warning=FALSE}
+set.seed(123)
+split.eval <- EvaluateRule(evaluation.data=evaluation.data,
+                           BuildRule.object=rule.split,
+                           study.design="observational",
+                           name.outcome="no_relapse",
+                           type.outcome="binary",
+                           desirable.outcome=TRUE,
+                           name.treatment="intervention",
+                           names.influencing.treatment=c("prognosis", "clinic", "age"),
+                           names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                           propensity.method="logistic.regression",
+                           bootstrap.CI=FALSE)
+split.eval$summaries
+```
+
+And last, the rule from OWL framework yields the following estimates
+```{r OWL_on_eval, warning=FALSE}
+set.seed(123)
+OWL.eval <- EvaluateRule(evaluation.data=evaluation.data,
+                              BuildRule.object=rule.OWL,
+                              study.design="observational",
+                              name.outcome="no_relapse",
+                              type.outcome="binary",
+                              desirable.outcome=TRUE,
+                              name.treatment="intervention",
+                              names.influencing.treatment=c("prognosis", "clinic", "age"),
+                              names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                              propensity.method="logistic.regression",
+                              bootstrap.CI=FALSE)
+OWL.eval$summaries
+```
+
+And last, the rule from OWL framework yields the following estimates
+```{r DI_on_eval, warning=FALSE}
+set.seed(123)
+DI.eval <- EvaluateRule(evaluation.data=evaluation.data,
+                              BuildRule.object=rule.DI,
+                              study.design="observational",
+                              name.outcome="no_relapse",
+                              type.outcome="binary",
+                              desirable.outcome=TRUE,
+                              name.treatment="intervention",
+                              names.influencing.treatment=c("prognosis", "clinic", "age"),
+                              names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                              propensity.method="logistic.regression",
+                              bootstrap.CI=FALSE)
+DI.eval$summaries
+```
+We could have also obtained bootstrap-based CIs for the ATE/ABR estimates (in both the validation and evaluation datasets) by specifying the following arguments to `BuildRulesOnValidation` and `EvaluateRule()`
+```{r}
+bootstrap.CI=TRUE
+booststrap.CI.replications=1000 # or any other number of replications
+```
+but we chose not to compute CIs in this example to minimize run-time.
+
+### References 
+* Yingqi Zhao, Donglin Zeng, A. John Rush & Michael R. Kosorok (2012). Estimating individualized treatment rules using outcome weighted learning. Journal of the American Statistical Association, 107:499 1106--1118.
+* Lu Tian, Ash A. Alizadeh, Andrew J. Gentles, Robert Tibshirani (2014). A simple method for estimating interactions between a treatment and a large number of covariates. Journal of the American Statistical Association, 109:508: 1517--1532.
+* Shuai Chen, Lu Tian, Tianxi Cai, Menggang Yu (2017). A general statistical framework for subgroup identification and comparative treatment scoring. Biometrics, 73:4: 1199--1209.
+* Jeremy Roth and Noah Simon (2019). Using propensity scores to develop and evaluate treatment rules with observational data. (Manuscript in progress).
+* Jeremy Roth and Noah Simon (2019). Elucidating outcome-weighted-learning and its comparison to split-regression: direct vs. indirect methods in practice. (Manuscript in progress).
+
