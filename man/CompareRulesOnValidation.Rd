@@ -4,13 +4,19 @@
 \alias{CompareRulesOnValidation}
 \title{Build treatment rules on a development dataset and evaluate performance on an independent validation dataset}
 \usage{
-CompareRulesOnValidation(development.data, validation.data,
-  vec.approaches = c("split.regression", "OWL.framework",
-  "direct.interactions"), vec.rule.methods = c("glm.regression", "lasso",
-  "ridge"), vec.propensity.methods = "logistic.regression",
-  study.design.development, name.outcome.development, type.outcome.development,
-  name.treatment.development, names.influencing.treatment.development,
-  names.influencing.rule.development, desirable.outcome.development,
+CompareRulesOnValidation(
+  development.data,
+  validation.data,
+  vec.approaches = c("split.regression", "OWL.framework", "direct.interactions"),
+  vec.rule.methods = c("glm.regression", "lasso", "ridge"),
+  vec.propensity.methods = "logistic.regression",
+  study.design.development,
+  name.outcome.development,
+  type.outcome.development,
+  name.treatment.development,
+  names.influencing.treatment.development,
+  names.influencing.rule.development,
+  desirable.outcome.development,
   additional.weights.development = rep(1, nrow(development.data)),
   study.design.validation = study.design.development,
   name.outcome.validation = name.outcome.development,
@@ -24,13 +30,21 @@ CompareRulesOnValidation(development.data, validation.data,
   additional.weights.validation = rep(1, nrow(validation.data)),
   truncate.propensity.score = TRUE,
   truncate.propensity.score.threshold = 0.05,
-  type.observation.weights = NULL, propensity.k.cv.folds = 10,
-  rule.k.cv.folds = 10, lambda.choice = c("min", "1se"),
-  OWL.lambda.seq = NULL, OWL.kernel = "linear", OWL.kparam.seq = NULL,
-  OWL.cvFolds = 10, OWL.verbose = TRUE, OWL.framework.shift.by.min = TRUE,
+  type.observation.weights = NULL,
+  propensity.k.cv.folds = 10,
+  rule.k.cv.folds = 10,
+  lambda.choice = c("min", "1se"),
+  OWL.lambda.seq = NULL,
+  OWL.kernel = "linear",
+  OWL.kparam.seq = NULL,
+  OWL.cvFolds = 10,
+  OWL.verbose = TRUE,
+  OWL.framework.shift.by.min = TRUE,
   direct.interactions.center.continuous.Y = TRUE,
-  direct.interactions.exclude.A.from.penalty = TRUE, bootstrap.CI = FALSE,
-  bootstrap.CI.replications = 100)
+  direct.interactions.exclude.A.from.penalty = TRUE,
+  bootstrap.CI = FALSE,
+  bootstrap.CI.replications = 100
+)
 }
 \arguments{
 \item{development.data}{A data frame representing the *development* dataset used to build treatment rules.}

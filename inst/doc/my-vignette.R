@@ -1,4 +1,4 @@
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "##"
@@ -10,28 +10,28 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 })
 options(digits=3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(DevTreatRules)
 head(obsStudyGeneExpressions)
 
-## ----split_data----------------------------------------------------------
+## ----split_data---------------------------------------------------------------
 set.seed(123)
 example.split <- SplitData(data=obsStudyGeneExpressions, n.sets=3, split.proportions=c(0.5, 0.25, 0.25))
 table(example.split$partition)
 
-## ----make_subsets, message=FALSE-----------------------------------------
+## ----make_subsets, message=FALSE----------------------------------------------
 library(dplyr)
 development.data <- example.split %>% filter(partition == "development")
 validation.data <-  example.split %>% filter(partition == "validation")
 evaluation.data <-  example.split %>% filter(partition == "evaluation")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 names.influencing.treatment=c("prognosis", "clinic", "age")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 names.influencing.rule=c("age", paste0("gene_", 1:10))
 
-## ----build_one_rule------------------------------------------------------
+## ----build_one_rule-----------------------------------------------------------
 one.rule <- BuildRule(development.data=development.data,
                       study.design="observational",
                       prediction.approach="split.regression",
@@ -44,14 +44,14 @@ one.rule <- BuildRule(development.data=development.data,
                       propensity.method="logistic.regression",
                       rule.method="glm.regression")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 vec.approaches=c("OWL", "split.regression", "OWL.framework", "direct.interactions")
 vec.rule.methods=c("glm.regression", "lasso", "ridge")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 vec.propensity.methods="logistic.regression"
 
-## ----model_selection_on_validation, warning=FALSE------------------------
+## ----model_selection_on_validation, warning=FALSE-----------------------------
 set.seed(123)
 model.selection <- CompareRulesOnValidation(development.data=development.data,
                 validation.data=validation.data,
@@ -66,38 +66,38 @@ model.selection <- CompareRulesOnValidation(development.data=development.data,
                 names.influencing.rule.development=c("age", paste0("gene_", 1:10)),
                 desirable.outcome.development=TRUE)
 
-## ----look_at_validation_split, size="footnotesize"-----------------------
+## ----look_at_validation_split, size="footnotesize"----------------------------
 model.selection$list.summaries[["split.regression"]] 
 
-## ----look_at_validation_OWL, size="footnotesize"-------------------------
+## ----look_at_validation_OWL, size="footnotesize"------------------------------
 model.selection$list.summaries[["OWL.framework"]] 
 
-## ----look_at_validation_DI, size="footnotesize"--------------------------
+## ----look_at_validation_DI, size="footnotesize"-------------------------------
 model.selection$list.summaries[["direct.interactions"]] 
 
-## ----selected_split_on_validation----------------------------------------
+## ----selected_split_on_validation---------------------------------------------
 model.selection$list.summaries$split.regression["propensity_logistic.regression_rule_glm.regression", ]
 
-## ----selected_OWL_on_validation------------------------------------------
+## ----selected_OWL_on_validation-----------------------------------------------
 model.selection$list.summaries$OWL.framework["propensity_logistic.regression_rule_glm.regression", ]
 
-## ----selected_DI_on_validation-------------------------------------------
+## ----selected_DI_on_validation------------------------------------------------
 model.selection$list.summaries$direct.interactions["propensity_logistic.regression_rule_lasso", ]
 
-## ----rule_split----------------------------------------------------------
+## ----rule_split---------------------------------------------------------------
 rule.split <- model.selection$list.rules$split.regression[["propensity_logistic.regression_rule_glm.regression"]]
 coef(rule.split$rule.object.control)
 coef(rule.split$rule.object.treat)
 
-## ----rule_OWL------------------------------------------------------------
+## ----rule_OWL-----------------------------------------------------------------
 rule.OWL <- model.selection$list.rules$OWL.framework[["propensity_logistic.regression_rule_glm.regression"]]
 coef(rule.OWL$rule.object)
 
-## ----rule_DI-------------------------------------------------------------
+## ----rule_DI------------------------------------------------------------------
 rule.DI <- model.selection$list.rules$direct.interactions[["propensity_logistic.regression_rule_lasso"]]
 coef(rule.DI$rule.object)
 
-## ----split_on_eval, warning=FALSE----------------------------------------
+## ----split_on_eval, warning=FALSE---------------------------------------------
 set.seed(123)
 split.eval <- EvaluateRule(evaluation.data=evaluation.data,
                            BuildRule.object=rule.split,
@@ -112,7 +112,7 @@ split.eval <- EvaluateRule(evaluation.data=evaluation.data,
                            bootstrap.CI=FALSE)
 split.eval$summaries
 
-## ----OWL_on_eval, warning=FALSE------------------------------------------
+## ----OWL_on_eval, warning=FALSE-----------------------------------------------
 set.seed(123)
 OWL.eval <- EvaluateRule(evaluation.data=evaluation.data,
                               BuildRule.object=rule.OWL,
@@ -127,7 +127,7 @@ OWL.eval <- EvaluateRule(evaluation.data=evaluation.data,
                               bootstrap.CI=FALSE)
 OWL.eval$summaries
 
-## ----DI_on_eval, warning=FALSE-------------------------------------------
+## ----DI_on_eval, warning=FALSE------------------------------------------------
 set.seed(123)
 DI.eval <- EvaluateRule(evaluation.data=evaluation.data,
                               BuildRule.object=rule.DI,
@@ -142,7 +142,7 @@ DI.eval <- EvaluateRule(evaluation.data=evaluation.data,
                               bootstrap.CI=FALSE)
 DI.eval$summaries
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bootstrap.CI=TRUE
 booststrap.CI.replications=1000 # or any other number of replications
 

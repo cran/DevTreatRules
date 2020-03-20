@@ -4,17 +4,32 @@
 \alias{EvaluateRule}
 \title{Evaluate a Treatment Rule}
 \usage{
-EvaluateRule(evaluation.data, BuildRule.object = NULL, B = NULL,
-  study.design, name.outcome, type.outcome, desirable.outcome,
-  separate.propensity.estimation = TRUE, clinical.threshold = 0,
-  name.treatment, names.influencing.treatment, names.influencing.rule,
-  propensity.method = NULL, show.treat.all = TRUE, show.treat.none = TRUE,
+EvaluateRule(
+  evaluation.data,
+  BuildRule.object = NULL,
+  B = NULL,
+  study.design,
+  name.outcome,
+  type.outcome,
+  desirable.outcome,
+  separate.propensity.estimation = TRUE,
+  clinical.threshold = 0,
+  name.treatment,
+  names.influencing.treatment,
+  names.influencing.rule,
+  propensity.method = NULL,
+  show.treat.all = TRUE,
+  show.treat.none = TRUE,
   truncate.propensity.score = TRUE,
-  truncate.propensity.score.threshold = 0.05, observation.weights = NULL,
+  truncate.propensity.score.threshold = 0.05,
+  observation.weights = NULL,
   additional.weights = rep(1, nrow(evaluation.data)),
-  lambda.choice = c("min", "1se"), propensity.k.cv.folds = 10,
-  bootstrap.CI = FALSE, bootstrap.CI.replications = 1000,
-  bootstrap.type = "basic")
+  lambda.choice = c("min", "1se"),
+  propensity.k.cv.folds = 10,
+  bootstrap.CI = FALSE,
+  bootstrap.CI.replications = 1000,
+  bootstrap.type = "basic"
+)
 }
 \arguments{
 \item{evaluation.data}{A data frame representing the *validation* or *evaluation* dataset used to estimate the performance of a rule that was developed on an independent development dataset.}

@@ -4,8 +4,13 @@
 \alias{PredictRule}
 \title{Get the treatment rule implied by \code{BuildRule()}}
 \usage{
-PredictRule(BuildRule.object, new.X, desirable.outcome = NULL,
-  clinical.threshold = 0, return.predicted.response = FALSE)
+PredictRule(
+  BuildRule.object,
+  new.X,
+  desirable.outcome = NULL,
+  clinical.threshold = 0,
+  return.predicted.response = FALSE
+)
 }
 \arguments{
 \item{BuildRule.object}{The object returned by the \code{BuildRule()} function.}

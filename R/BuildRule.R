@@ -190,9 +190,6 @@ BuildRule <- function(development.data,
     idx.treatment <- which(my.formatted.data$df.model.matrix.all[, "treatment"] == 1)
     if (study.design == "observational") {
         if (prediction.approach %in% c("direct.interactions")) {
-            ## response.for.propensity.score <- "fac.treatment.neg.pos"
-            ## data.matrix.for.propensity.score <- my.formatted.data$model.matrix.X.times.A.plus.AY
-            ## data.df.for.propensity.score <- my.formatted.data$df.model.matrix.X.times.A.plus.AY
             response.for.propensity.score <- "fac.treatment"
             data.matrix.for.propensity.score <- my.formatted.data$model.matrix.all
             data.df.for.propensity.score <- my.formatted.data$df.model.matrix.all

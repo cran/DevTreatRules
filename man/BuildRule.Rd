@@ -4,18 +4,34 @@
 \alias{BuildRule}
 \title{Build a Treatment Rule}
 \usage{
-BuildRule(development.data, study.design, prediction.approach, name.outcome,
-  type.outcome, name.treatment, names.influencing.treatment = NULL,
-  names.influencing.rule, desirable.outcome, rule.method = NULL,
-  propensity.method, additional.weights = rep(1, nrow(development.data)),
+BuildRule(
+  development.data,
+  study.design,
+  prediction.approach,
+  name.outcome,
+  type.outcome,
+  name.treatment,
+  names.influencing.treatment = NULL,
+  names.influencing.rule,
+  desirable.outcome,
+  rule.method = NULL,
+  propensity.method,
+  additional.weights = rep(1, nrow(development.data)),
   truncate.propensity.score = TRUE,
   truncate.propensity.score.threshold = 0.05,
-  type.observation.weights = NULL, propensity.k.cv.folds = 10,
-  rule.k.cv.folds = 10, lambda.choice = c("min", "1se"),
-  OWL.lambda.seq = NULL, OWL.kernel = "linear", OWL.kparam.seq = NULL,
-  OWL.cvFolds = 10, OWL.verbose = TRUE, OWL.framework.shift.by.min = TRUE,
+  type.observation.weights = NULL,
+  propensity.k.cv.folds = 10,
+  rule.k.cv.folds = 10,
+  lambda.choice = c("min", "1se"),
+  OWL.lambda.seq = NULL,
+  OWL.kernel = "linear",
+  OWL.kparam.seq = NULL,
+  OWL.cvFolds = 10,
+  OWL.verbose = TRUE,
+  OWL.framework.shift.by.min = TRUE,
   direct.interactions.center.continuous.Y = TRUE,
-  direct.interactions.exclude.A.from.penalty = TRUE)
+  direct.interactions.exclude.A.from.penalty = TRUE
+)
 }
 \arguments{
 \item{development.data}{A data frame representing the *development* dataset (i.e. training set) used for building a treatment rule.}

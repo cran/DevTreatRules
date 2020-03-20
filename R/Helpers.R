@@ -96,13 +96,13 @@ OneDynTxRegime <- function(data.matrix,
                                         OWL.verbose=TRUE) {
     kernel <- match.arg(kernel)
     if (is.null(lambda.seq)) {
-        lambda.seq <- 2 ^ seq(from=-5, to=5, by=1) 
+        lambda.seq <- 2 ^ seq(from=-5, to=5, by=1)
     }
     if (kernel == "linear") {
         kparam.seq <- NULL
     } else if (is.null(kparam.seq) & kernel == "radial") {
         kparam.seq <- 2 ^ seq(from=-10, to=10, by=1)
-    } 
+    }
     if (DynTxRegime.method == "OWL") {
         if (study.design == "observational") {
             # re-define outcome for observational study
@@ -235,13 +235,13 @@ DoPrediction <- function(data.matrix,
             optimal.lambda <- "lambda.1se"
         }
         if (type.response == "binary") {
-            one.fit.predicted.probability <- as.numeric(predict.cv.glmnet(one.cv.glmnet, newx=features, s=optimal.lambda, type="response"))
+            one.fit.predicted.probability <- as.numeric(predict(one.cv.glmnet, newx=features, s=optimal.lambda, type="response")) # march 2020
             one.fit.predicted.class <- as.numeric(one.fit.predicted.probability >= 0.5)
             return(list("one.fit"=one.cv.glmnet,
                           "one.fit.predicted.probability"=one.fit.predicted.probability,
                           "one.fit.predicted.class"=one.fit.predicted.class))
         } else if (type.response == "continuous") {
-            one.fit.predicted.response <- as.numeric(predict.cv.glmnet(one.cv.glmnet, newx=features, s=optimal.lambda, type="response"))
+            one.fit.predicted.response <- as.numeric(predict(one.cv.glmnet, newx=features, s=optimal.lambda, type="response"))
             return(list("one.fit"=one.cv.glmnet,
                           "one.fit.predicted.response"=one.fit.predicted.response))
         }
@@ -254,7 +254,7 @@ DoPrediction <- function(data.matrix,
         #print(summary(df.with.weights))
         #print(my.glm.formula)
         one.fit <- stats::glm(my.glm.formula,
-                            family="quasibinomial", 
+                            family="quasibinomial",
                             data=df.with.weights,
                             weights=observation.weights)
         #print(coef(one.fit))
@@ -319,7 +319,7 @@ FormatData <- function(data,
     #print(names(model.matrix.L))
     if (ncol(model.matrix.L) == 2) {
         #names.model.matrix.L <- model.matrix.L
-        model.matrix.L <- as.matrix(model.matrix.L[, -1, drop=FALSE]) 
+        model.matrix.L <- as.matrix(model.matrix.L[, -1, drop=FALSE])
         #colnames(model.matrix.L) <- names.model.matrix.L[2]
     } else {
         model.matrix.L <- model.matrix.L[, -1, drop=FALSE]
@@ -330,10 +330,10 @@ FormatData <- function(data,
     #print("orig names of model.matrix.X:")
     #print(names(model.matrix.X))
     if (ncol(model.matrix.X) == 2) {
-        model.matrix.X <- as.matrix(model.matrix.X[, -1, drop=FALSE]) 
+        model.matrix.X <- as.matrix(model.matrix.X[, -1, drop=FALSE])
         colnames(model.matrix.X) <- names.influencing.rule
     } else {
-        model.matrix.X <- model.matrix.X[, -1, drop=FALSE] 
+        model.matrix.X <- model.matrix.X[, -1, drop=FALSE]
     }
     df.model.matrix.X <- as.data.frame(model.matrix.X)
     ## L and X (variables influencing treatment and rule)
@@ -348,8 +348,8 @@ FormatData <- function(data,
                                                       "treatment"=data[, name.treatment], "fac.treatment"=fac.treatment,
                                                        df.model.matrix.L.and.X)
     } else {
-        df.model.matrix.all <- data.frame("outcome"=data[, name.outcome], 
-                                                       "outcome.centered"=outcome.centered, 
+        df.model.matrix.all <- data.frame("outcome"=data[, name.outcome],
+                                                       "outcome.centered"=outcome.centered,
                                                        "treatment"=data[, name.treatment], "fac.treatment"=fac.treatment,
                                                        df.model.matrix.L.and.X)
     }
@@ -371,11 +371,11 @@ FormatData <- function(data,
         ##                                                       df.model.matrix.X.times.A)
     } else {
         df.model.matrix.X.times.A.plus.AY <- data.frame("outcome"=data[, name.outcome], "outcome.centered"=outcome.centered,
-                                                                 "fac.treatment.neg.pos"=fac.treatment.neg.pos, 
+                                                                 "fac.treatment.neg.pos"=fac.treatment.neg.pos,
                                                                 #df.model.matrix.L,
                                                                  df.model.matrix.X.times.A)
         ## df.model.matrix.X.times.A.plus.AY <- data.frame("outcome"=data[, name.outcome], "outcome.centered"=outcome.centered,
-        ##                                                          "fac.treatment.neg.pos"=fac.treatment.neg.pos, 
+        ##                                                          "fac.treatment.neg.pos"=fac.treatment.neg.pos,
         ##                                                          df.model.matrix.L,
         ##                                                          df.model.matrix.X.times.A)
     }
@@ -392,7 +392,7 @@ FormatData <- function(data,
 EvaluateRuleOnce <- function(data,
                                   my.formatted.data,
                                   BuildRule.object=NULL,
-                                  B=NULL, 
+                                  B=NULL,
                                   study.design, #=c("RCT", "observational"),
                                   type.outcome,
                                   desirable.outcome,
@@ -404,7 +404,7 @@ EvaluateRuleOnce <- function(data,
                                   observation.weights,
                                   additional.weights=rep(1, nrow(data)),
                                   lambda.choice=c("min", "1se"),
-                                  bootstrap.CI=FALSE, 
+                                  bootstrap.CI=FALSE,
                                   propensity.k.cv.folds=10,
                                   truncate.propensity.score,
                                   truncate.propensity.score.threshold) {
@@ -485,7 +485,7 @@ EvaluateRuleOnce <- function(data,
                                                                                                          threshold=truncate.propensity.score.threshold)
                 idx.test.positives.treatment <- my.formatted.data$df.model.matrix.all[idx.test.positives, "treatment"] == 1
                 idx.test.positives.control <- my.formatted.data$df.model.matrix.all[idx.test.positives, "treatment"] == 0
-                
+
                 # Predict P(T=1 | L, B=0)
                 propensity.score.L.object.test.negatives <- DoPrediction(data.matrix=my.formatted.data$model.matrix.all[idx.test.negatives, ],
                                                                           data.df=my.formatted.data$df.model.matrix.all[idx.test.negatives, ],
@@ -502,7 +502,7 @@ EvaluateRuleOnce <- function(data,
                                                                                                           threshold=truncate.propensity.score.threshold)
                 idx.test.negatives.treatment <- my.formatted.data$df.model.matrix.all[idx.test.negatives, "treatment"] == 1
                 idx.test.negatives.control <- my.formatted.data$df.model.matrix.all[idx.test.negatives, "treatment"] == 0
-                
+
                 obs.weights <- rep(NA, n)
                 obs.weights[idx.test.positives][idx.test.positives.treatment] <- (1 / propensity.score.L.test.positives.probability)[idx.test.positives.treatment]
                 obs.weights[idx.test.positives][idx.test.positives.control] <- (1 / (1 - propensity.score.L.test.positives.probability))[idx.test.positives.control]

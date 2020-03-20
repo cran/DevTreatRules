@@ -1,8 +1,8 @@
 #' Get the treatment rule implied by \code{BuildRule()}
-#' 
+#'
 #' Map the object returned by \code{BuildRule()} to the treatment rule corresponding to a particular dataset
 #'
-#' @param BuildRule.object The object returned by the \code{BuildRule()} function. 
+#' @param BuildRule.object The object returned by the \code{BuildRule()} function.
 #' @param new.X A data frame representing the dataset for which the treatment rule is desired.
 #' @param desirable.outcome A logical equal to \code{TRUE} if higher values of the outcome are considered desirable (e.g. for a binary outcome, 1 is more desirable than 0). The \code{OWL.framework} and \code{OWL} approaches to treatment rule estimation require a desirable outcome.
 #' @param clinical.threshold A numeric equal a positive number above which the predicted outcome under treatment must be superior to the predicted outcome under control for treatment to be recommended. Only used when \code{BuildRuleObject} was specified and derived from the split-regression or direct-interactions approach. Defaults to 0.
@@ -59,7 +59,7 @@ PredictRule <- function(BuildRule.object,
     rm(new.X)
     if (prediction.approach == "OWL") {
         one.result <- optTx(BuildRule.object$owl.object$one.fit,
-                                   newdata=df.model.matrix.new.X)$optimalTx 
+                                   newdata=df.model.matrix.new.X)$optimalTx
         recommended.treatment <- rep(NA, nrow(df.model.matrix.new.X))
         recommended.treatment[one.result == -1] <- 0
         recommended.treatment[one.result == 1] <- 1
@@ -76,12 +76,12 @@ PredictRule <- function(BuildRule.object,
                 optimal.lambda <- "lambda.1se"
             }
             if (prediction.approach %in% c("split.regression")) {
-                predicted.outcome.under.treatment <- as.numeric(predict.cv.glmnet(BuildRule.object$rule.object.treatment, newx=model.matrix.new.X, s=optimal.lambda, type="response"))
-                predicted.outcome.under.control <- as.numeric(predict.cv.glmnet(BuildRule.object$rule.object.control, newx=model.matrix.new.X, s=optimal.lambda, type="response"))
+                predicted.outcome.under.treatment <- as.numeric(predict(BuildRule.object$rule.object.treatment, newx=model.matrix.new.X, s=optimal.lambda, type="response")) # march 2020
+                predicted.outcome.under.control <- as.numeric(predict(BuildRule.object$rule.object.control, newx=model.matrix.new.X, s=optimal.lambda, type="response"))
             } else if (prediction.approach %in% c("direct.interactions")) {
                 my.mat.X <- cbind(1, model.matrix.new.X)
                 colnames(my.mat.X)[1] <- "treatment.neg.pos"
-                predicted.outcome <- as.numeric(predict.cv.glmnet(BuildRule.object$rule.object, newx=my.mat.X, s=optimal.lambda, type="response"))
+                predicted.outcome <- as.numeric(predict(BuildRule.object$rule.object, newx=my.mat.X, s=optimal.lambda, type="response"))
             }
         } else if (BuildRule.object$rule.method %in% c("logistic.regression","linear.regression")) {
             if (prediction.approach %in% c("split.regression")) {
